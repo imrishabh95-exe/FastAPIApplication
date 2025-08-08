@@ -9,10 +9,8 @@ COPY ./requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy the rest of the application code
-COPY ./Application ./Application
-
-# Expose the port on which the app will run (default for Uvicorn)
-EXPOSE 8000
+# Assuming your main.py is inside the ./Application directory
+COPY ./Application .
 
 # Command to run the application with Uvicorn
-CMD ["uvicorn", "Application.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
