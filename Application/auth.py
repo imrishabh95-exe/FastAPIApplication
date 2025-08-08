@@ -4,10 +4,10 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr
-from db import users_collection
-from db import token_blacklist_collection
+from Application.db import users_collection
+from Application.db import token_blacklist_collection
 from bson.objectid import ObjectId
-from config import PASSWORD_SALT, JWT_SECRET_KEY
+from Application.config import PASSWORD_SALT, JWT_SECRET_KEY
 
 # JWT settings
 ALGORITHM = "HS256"

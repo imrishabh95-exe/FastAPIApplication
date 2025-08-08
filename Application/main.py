@@ -2,16 +2,16 @@ from fastapi import FastAPI, Depends, HTTPException, Body, Path, status
 from fastapi.middleware.cors import CORSMiddleware
 from google.oauth2 import id_token
 from fastapi.security import OAuth2PasswordRequestForm
-from auth import (
+from Application.auth import (
     Token, User, get_current_user, create_access_token,
     authenticate_user, is_token_blacklisted, blacklist_token,
     UserCreate, UserLogin, create_refresh_token, get_user_by_email
 )
-from db import init_db, users_collection
-from auth import get_password_hash
+from Application.db import init_db, users_collection
+from Application.auth import get_password_hash
 from google.auth.transport import requests as google_requests
 from jose import jwt, JWTError
-from config import JWT_SECRET_KEY
+from Application.config import JWT_SECRET_KEY
 from typing import Annotated
 from datetime import datetime
 
