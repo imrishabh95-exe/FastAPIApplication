@@ -12,5 +12,7 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Assuming your main.py is inside the ./Application directory
 COPY ./Application .
 
+EXPOSE 8080
+
 # Command to run the application with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
