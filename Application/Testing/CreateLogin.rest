@@ -1,0 +1,41 @@
+@host = http://127.0.0.1:8000
+@access_token = 
+@refresh_token = 
+@test_email = cleanup_user@example.com
+
+###
+# @name Signup
+# Creates a new user account with a secure JSON body.
+POST {{host}}/create-user
+Content-Type: application/json
+
+{
+    "email": "{{test_email}}",
+    "password": "cleanup_password",
+    "first_name": "Cleanup",
+    "last_name": "User"
+}
+
+###
+# @name Login
+# Logs in and automatically captures tokens.
+POST {{host}}/login
+Content-Type: application/json
+
+{
+    "email": "{{test_email}}",
+    "password": "cleanup_password"
+}
+
+###
+# @name VerifyLogin
+# Uses the captured token to access a protected endpoint.
+GET {{host}}/users/me
+Authorization: Bearer {{Login.response.body.access_token}}
+
+###
+# @name Cleanup
+# Deletes the user account created during the signup step.
+# Requires the access token to authenticate.
+DELETE {{host}}/users/{{test_email}}
+Authorization: Bearer {{Login.response.body.access_token}}
