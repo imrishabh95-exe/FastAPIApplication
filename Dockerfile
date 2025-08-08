@@ -9,10 +9,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy the rest of the application code
-COPY ./Application .
+COPY ./Application ./Application
 
 # Expose the app port
 EXPOSE 8080
 
-# Run the app with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Use entrypoint script if you have one, or run with correct module path
+CMD ["uvicorn", "Application.main:app", "--host", "0.0.0.0", "--port", "8080"]
