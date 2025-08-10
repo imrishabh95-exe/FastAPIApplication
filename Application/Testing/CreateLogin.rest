@@ -39,6 +39,28 @@ Content-Type: application/json
 }
 
 ###
+# @name Forgot
+# Logs in and automatically captures tokens.
+POST {{host}}/forgot-password/request
+Content-Type: application/json
+
+{
+    "email": "{{test_email}}"
+}
+
+###
+# @name Forgot
+# Logs in and automatically captures tokens.
+POST {{host}}/forgot-password/reset
+Content-Type: application/json
+
+{
+    "email": "{{test_email}}",
+    "code": "542881",
+    "new_password": "cleanup123@"
+}
+
+###
 # @name VerifyLogin
 # Uses the captured token to access a protected endpoint.
 GET {{host}}/users/me

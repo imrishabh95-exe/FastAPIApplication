@@ -6,7 +6,8 @@ from Application.auth import (
     Token, User, get_current_user, create_access_token,
     authenticate_user, is_token_blacklisted, blacklist_token,
     UserCreate, UserLogin, create_refresh_token, get_user_by_email,
-    validate_code_for_signup, generate_and_store_code, can_send_new_code
+    validate_code_for_signup, generate_and_store_code, can_send_new_code,
+    ForgotPasswordRequest, ForgotPasswordReset
 )
 from pymongo.errors import DuplicateKeyError
 from Application.db import init_db, users_collection
@@ -31,6 +32,55 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/forgot-password/request")
+async def forgot_password_request(request: ForgotPasswordRequest):
+    email = request.email.lower().strip()
+    user = await get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    can_send, wait_time = await can_send_new_code(email)
+    if not can_send:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Please wait {wait_time} seconds before requesting a new code."
+        )
+
+    code = await generate_and_store_code(email)
+    subject = "Your Password Reset Code"
+    message = f"Your password reset code is: {code}. It is valid for 10 minutes."
+    print(f"[DEBUG] Sending reset code {code} to {email}")
+
+    email_sent = send_email(email, subject, message)
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send reset code email")
+
+    return {"message": "Password reset code sent successfully"}
+
+
+
+@app.post("/forgot-password/reset")
+async def forgot_password_reset(request: ForgotPasswordReset):
+    email = request.email.lower().strip()
+    code = request.code.strip()
+    new_password = request.new_password
+
+    # Validate code - reuse your validation function
+    is_valid, error = await validate_code_for_signup(email, code)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error)
+
+    # Hash and update the new password
+    hashed_password = get_password_hash(new_password)
+    update_result = await users_collection.update_one(
+        {"email": email},
+        {"$set": {"hashed_password": hashed_password}}
+    )
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to update password")
+
+    return {"message": "Password reset successfully"}
 
 @app.post("/send-verification-code")
 async def send_verification_code(email: str = Body(..., embed=True)):

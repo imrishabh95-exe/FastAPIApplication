@@ -19,7 +19,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 CODE_VALIDITY_SECONDS = 600
 CODE_RESEND_COOLDOWN = 60    # block resending for 1 min even if code was used
 
-
 def hash_verification_code(code: str) -> str:
     return pwd_context.hash(PASSWORD_SALT + code)
 
@@ -94,6 +93,14 @@ async def is_token_blacklisted(token: str) -> bool:
     return token_doc is not None
 
 # Pydantic Models
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ForgotPasswordReset(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
