@@ -7,7 +7,7 @@ from Application.auth import (
     authenticate_user, is_token_blacklisted, blacklist_token,
     UserCreate, UserLogin, create_refresh_token, get_user_by_email,
     validate_code_for_signup, generate_and_store_code, can_send_new_code,
-    ForgotPasswordRequest, ForgotPasswordReset
+    ForgotPasswordRequest, ForgotPasswordReset, LogoutRequest
 )
 from pymongo.errors import DuplicateKeyError
 from Application.db import init_db, users_collection
@@ -18,6 +18,7 @@ from Application.config import JWT_SECRET_KEY
 from typing import Annotated
 from datetime import datetime
 from fastapi.responses import JSONResponse
+from fastapi import Header
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -221,9 +222,18 @@ async def refresh_token(refresh_token: str = Body(...)):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
     
 @app.post("/logout")
-async def logout(refresh_token: str = Body(...)):
-    await blacklist_token(refresh_token)
-    return {"message": "Logged out and refresh token revoked"}
+async def logout(data: LogoutRequest, authorization: str = Header(...)):
+    # Extract the access token from "Bearer <token>" string
+    if authorization.startswith("Bearer "):
+        access_token = authorization[7:]
+    else:
+        access_token = authorization  # fallback
+    
+    # blacklist both tokens
+    await blacklist_token(data.refresh_token)
+    await blacklist_token(access_token)
+    
+    return {"message": "Logged out and tokens revoked"}
 
 
 @app.post("/users/google-login", response_model=Token)

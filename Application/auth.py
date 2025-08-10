@@ -128,6 +128,9 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
@@ -179,6 +182,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         detail="Invalid credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    # Check if token is blacklisted
+    if await is_token_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")

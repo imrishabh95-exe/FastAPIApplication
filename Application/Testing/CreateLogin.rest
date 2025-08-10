@@ -35,7 +35,7 @@ Content-Type: application/json
 
 {
     "email": "{{test_email}}",
-    "password": "cleanup"
+    "password": "cleanup123@"
 }
 
 ###
@@ -72,3 +72,13 @@ Authorization: Bearer {{Login.response.body.access_token}}
 # Requires the access token to authenticate.
 DELETE {{host}}/users/{{test_email}}
 Authorization: Bearer {{Login.response.body.access_token}}
+
+
+### Logout
+POST {{host}}/logout
+Content-Type: application/json
+Authorization: Bearer {{Login.response.body.access_token}}
+
+{
+  "refresh_token": "{{Login.response.body.refresh_token}}"
+}
