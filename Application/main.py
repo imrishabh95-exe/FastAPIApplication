@@ -5,8 +5,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from Application.auth import (
     Token, User, get_current_user, create_access_token,
     authenticate_user, is_token_blacklisted, blacklist_token,
-    UserCreate, UserLogin, create_refresh_token, get_user_by_email
+    UserCreate, UserLogin, create_refresh_token, get_user_by_email,
+    validate_code_for_signup, generate_and_store_code, can_send_new_code
 )
+from pymongo.errors import DuplicateKeyError
 from Application.db import init_db, users_collection
 from Application.auth import get_password_hash
 from google.auth.transport import requests as google_requests
@@ -14,12 +16,56 @@ from jose import jwt, JWTError
 from Application.config import JWT_SECRET_KEY
 from typing import Annotated
 from datetime import datetime
+from fastapi.responses import JSONResponse
 
 from dotenv import load_dotenv
 load_dotenv()
 
 
 app = FastAPI()
+
+@app.post("/send-verification-code")
+async def send_verification_code(email: str = Body(..., embed=True)):
+    # 1. Check if we can send new code
+    can_send, remaining = await can_send_new_code(email)
+    if not can_send:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "status": "error",
+                "message": f"Please wait {remaining} seconds before requesting a new code."
+            }
+        )
+
+    # 2. Generate and store hashed code
+    code = await generate_and_store_code(email)
+
+    # 3. Send email (replace with your actual mail sending logic)
+    # Example debug output for now:
+    print(f"[DEBUG] Sending verification code {code} to {email}")
+
+    # If you want to use real sending:
+    # send_mail(
+    #     subject="Your Verification Code",
+    #     message=f"Your verification code is: {code}",
+    #     from_email="no-reply@example.com",
+    #     recipient_list=[email],
+    #     fail_silently=False
+    # )
+
+    return {"status": "success", "message": "Verification code sent successfully"}
+
+@app.post("/send-verification-code")
+async def send_verification_code(email: str = Body(..., embed=True)):
+    can_send, remaining = await can_send_new_code(email)
+    if not can_send:
+        return {"status": "error", "message": f"Please wait {remaining} seconds before requesting a new code."}
+
+    code = await generate_and_store_code(email)
+
+    # Replace with your email sending logic
+    print(f"[DEBUG] Sending verification code {code} to {email}")
+    return {"status": "success", "message": "Verification code sent successfully"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -70,20 +116,28 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 @app.post("/create-user")
-async def create_user(user_data: UserCreate):
-    hashed_pw = get_password_hash(user_data.password)
-    user = {
-        "email": user_data.email,
-        "first_name": user_data.first_name,
-        "last_name": user_data.last_name,
-        "hashed_password": hashed_pw,
+async def create_user(user: UserCreate):
+    # ✅ Step 1: validate verification code
+    is_valid, error_msg = await validate_code_for_signup(user.email, user.code)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+
+    # ✅ Step 2: prepare user doc (lowercase email, hashed password)
+    user_doc = {
+        "email": user.email.lower(),
+        "hashed_password": get_password_hash(user.password),
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "joined_on": datetime.utcnow()
     }
-    existing = await users_collection.find_one({"email": user_data.email})
-    if existing:
-        raise HTTPException(status_code=400, detail="User with this email already exists")
-    result = await users_collection.insert_one(user)
-    return {"id": str(result.inserted_id), "email": user_data.email, "joined_on": user["joined_on"]}
+
+    # ✅ Step 3: insert with unique email check
+    try:
+        result = await users_collection.insert_one(user_doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    return {"message": "User created successfully", "id": str(result.inserted_id)}
 
 @app.delete("/users/{email}")
 async def delete_user(

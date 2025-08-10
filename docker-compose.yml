@@ -4,6 +4,11 @@ services:
   fastapi-be:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
       - MONGO_URI=${MONGO_URI}
+      - MONGO_DB_NAME=${MONGO_DB_NAME}
+      - PASSWORD_SALT=${PASSWORD_SALT}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}

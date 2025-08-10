@@ -1,7 +1,17 @@
-@host = http://127.0.0.1:8000
+@host = http://localhost:8080
 @access_token = 
 @refresh_token = 
-@test_email = cleanup_user@example.com
+@test_email = cleanup@example.com
+
+###
+# @name Code
+# Creates a new user account with a secure JSON body.
+POST {{host}}/send-verification-code
+Content-Type: application/json
+
+{
+    "email": "{{test_email}}"
+}
 
 ###
 # @name Signup
@@ -11,7 +21,8 @@ Content-Type: application/json
 
 {
     "email": "{{test_email}}",
-    "password": "cleanup_password",
+    "code": "290351",
+    "password": "cleanup",
     "first_name": "Cleanup",
     "last_name": "User"
 }
@@ -24,7 +35,7 @@ Content-Type: application/json
 
 {
     "email": "{{test_email}}",
-    "password": "cleanup_password"
+    "password": "cleanup"
 }
 
 ###

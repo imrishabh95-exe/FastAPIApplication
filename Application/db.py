@@ -11,7 +11,16 @@ db = client[DB_NAME]
 
 users_collection = db.get_collection("users")
 token_blacklist_collection = db.get_collection("token_blacklist")
+user_code_collection = db.get_collection("user_code")
 
 # Ensure index for username (optional)
 async def init_db():
-    await users_collection.create_index([("username", ASCENDING)], unique=True)
+    # Ensure unique email (case-insensitive)
+    await users_collection.create_index(
+        [("email", ASCENDING)],
+        unique=True,
+        collation={"locale": "en", "strength": 2}  # Makes it case-insensitive
+    )
+
+    # Prevent duplicate verification code entries per email
+    await user_code_collection.create_index([("email", ASCENDING)], unique=True)
