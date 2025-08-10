@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
     "email": "{{test_email}}",
-    "code": "290351",
+    "code": "103711",
     "password": "cleanup",
     "first_name": "Cleanup",
     "last_name": "User"

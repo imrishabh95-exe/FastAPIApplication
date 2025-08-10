@@ -24,6 +24,14 @@ load_dotenv()
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/send-verification-code")
 async def send_verification_code(email: str = Body(..., embed=True)):
     # 1. Check if we can send new code
@@ -52,26 +60,6 @@ async def send_verification_code(email: str = Body(..., embed=True)):
     )
 
     return {"status": "success", "message": "Verification code sent successfully"}
-
-@app.post("/send-verification-code")
-async def send_verification_code(email: str = Body(..., embed=True)):
-    can_send, remaining = await can_send_new_code(email)
-    if not can_send:
-        return {"status": "error", "message": f"Please wait {remaining} seconds before requesting a new code."}
-
-    code = await generate_and_store_code(email)
-
-    # Replace with your email sending logic
-    print(f"[DEBUG] Sending verification code {code} to {email}")
-    return {"status": "success", "message": "Verification code sent successfully"}
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.on_event("startup")
@@ -115,27 +103,32 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.post("/create-user")
 async def create_user(user: UserCreate):
-    # ✅ Step 1: validate verification code
-    is_valid, error_msg = await validate_code_for_signup(user.email, user.code)
+    email_normalized = user.email.strip().lower()
+
+    # Validate verification code
+    is_valid, error_msg = await validate_code_for_signup(email_normalized, user.code)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
 
-    # ✅ Step 2: prepare user doc (lowercase email, hashed password)
+    # Check if email already exists in DB
+    existing_user = await users_collection.find_one({"email": email_normalized})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Create user document
     user_doc = {
-        "email": user.email.lower(),
+        "email": email_normalized,
         "hashed_password": get_password_hash(user.password),
         "first_name": user.first_name,
         "last_name": user.last_name,
         "joined_on": datetime.utcnow()
     }
 
-    # ✅ Step 3: insert with unique email check
-    try:
-        result = await users_collection.insert_one(user_doc)
-    except DuplicateKeyError:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # Insert user into DB
+    result = await users_collection.insert_one(user_doc)
 
     return {"message": "User created successfully", "id": str(result.inserted_id)}
+
 
 @app.delete("/users/{email}")
 async def delete_user(
