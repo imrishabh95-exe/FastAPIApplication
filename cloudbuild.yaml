@@ -21,7 +21,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--set-secrets'
-      - 'MONGO_URI=MONGO_URI:latest,MONGO_DB_NAME=MONGO_DB_NAME:latest,PASSWORD_SALT=PASSWORD_SALT:latest,JWT_SECRET_KEY=JWT_SECRET_KEY:latest'
+      - 'MONGO_URI=MONGO_URI:latest,MONGO_DB_NAME=MONGO_DB_NAME:latest,PASSWORD_SALT=PASSWORD_SALT:latest,JWT_SECRET_KEY=JWT_SECRET_KEY:latest,EMAIL_HOST_USER=EMAIL_HOST_USER:latest,EMAIL_HOST_PASSWORD=EMAIL_HOST_PASSWORD:latest'
 
 images:
   - 'gcr.io/$PROJECT_ID/fastapi-backend:$COMMIT_SHA'
