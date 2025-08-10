@@ -10,7 +10,7 @@ from Application.auth import (
 )
 from pymongo.errors import DuplicateKeyError
 from Application.db import init_db, users_collection
-from Application.auth import get_password_hash
+from Application.auth import get_password_hash, send_email
 from google.auth.transport import requests as google_requests
 from jose import jwt, JWTError
 from Application.config import JWT_SECRET_KEY
@@ -45,13 +45,11 @@ async def send_verification_code(email: str = Body(..., embed=True)):
     print(f"[DEBUG] Sending verification code {code} to {email}")
 
     # If you want to use real sending:
-    # send_mail(
-    #     subject="Your Verification Code",
-    #     message=f"Your verification code is: {code}",
-    #     from_email="no-reply@example.com",
-    #     recipient_list=[email],
-    #     fail_silently=False
-    # )
+    send_email(
+        to_email=email,
+        subject="Your Verification Code",
+        message=f"Your verification code is: {code}"
+    )
 
     return {"status": "success", "message": "Verification code sent successfully"}
 

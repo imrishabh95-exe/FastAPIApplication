@@ -1,7 +1,7 @@
 @host = http://localhost:8080
 @access_token = 
 @refresh_token = 
-@test_email = cleanup@example.com
+@test_email = imrishabh95@gmail.com
 
 ###
 # @name Code
