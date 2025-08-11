@@ -11,6 +11,9 @@ db = client[DB_NAME]
 users_collection = db.get_collection("users")
 token_blacklist_collection = db.get_collection("token_blacklist")
 user_code_collection = db.get_collection("user_code")
+dashboards_collection = db.get_collection("dashboards")
+chats_collection = db.get_collection("chats")
+transactional_groups_collection = db.get_collection("transactional_groups")
 
 async def init_db():
     # 🔹 Remove old username index if it exists
@@ -28,3 +31,4 @@ async def init_db():
 
     # 🔹 Prevent duplicate verification code entries per email
     await user_code_collection.create_index([("email", ASCENDING)], unique=True)
+    await dashboards_collection.create_index([("owner_id", ASCENDING)])

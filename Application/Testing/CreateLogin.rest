@@ -82,3 +82,27 @@ Authorization: Bearer {{Login.response.body.access_token}}
 {
   "refresh_token": "{{Login.response.body.refresh_token}}"
 }
+
+
+
+### Dashboard
+POST {{host}}/dashboard/create
+Content-Type: application/json
+Authorization: Bearer {{Login.response.body.access_token}}
+
+{
+  "title": "My First Dashboard",
+  "description": "This is my main budget dashboard",
+  "theme_color": "#1E90FF"
+}
+
+### TGs
+POST {{host}}/transactional-group/create
+Content-Type: application/json
+Authorization: Bearer {{Login.response.body.access_token}}
+
+{
+  "title": "Team Expenses",
+  "description": "Group for shared expenses tracking",
+  "color": "#FF5733"
+}

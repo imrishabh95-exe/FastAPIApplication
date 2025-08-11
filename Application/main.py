@@ -24,6 +24,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+from Application.routers.dashboards import router as dashboard_router
+from Application.routers.chat import router as chat_router
+from Application.routers.transactional_group import router as transactional_group_router
+
+
 app = FastAPI()
 
 app.add_middleware(
@@ -268,3 +273,7 @@ async def google_login(token: str = Body(...)):
 
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid Google token")
+
+app.include_router(dashboard_router)
+app.include_router(chat_router)
+app.include_router(transactional_group_router)
