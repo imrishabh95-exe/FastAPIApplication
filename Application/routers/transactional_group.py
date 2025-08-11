@@ -26,6 +26,7 @@ class TransactionalGroupResponse(BaseModel):
     chat_id: str
     color: str
 
+
 # --- Create Transactional Group ---
 @router.post("/create", response_model=TransactionalGroupResponse)
 async def create_transactional_group(
@@ -69,3 +70,26 @@ async def create_transactional_group(
     )
 
     return group_data
+
+
+# --- Get all transactional groups for logged-in user ---
+@router.get("/my-transactional-groups")
+async def get_my_transactional_groups(current_user: User = Depends(get_current_user)):
+    """Returns transactional groups owned by and shared with the current user."""
+
+    owned_groups = await transactional_groups_collection.find(
+        {"owner_id": current_user.id}
+    ).to_list(length=None)
+
+    shared_groups = await transactional_groups_collection.find(
+        {"shared_with": {"$in": [current_user.id]}}
+    ).to_list(length=None)
+
+    def serialize(doc):
+        doc["_id"] = str(doc["_id"])
+        return doc
+
+    return {
+        "owned": [serialize(g) for g in owned_groups],
+        "shared_access": [serialize(g) for g in shared_groups]
+    }

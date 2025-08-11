@@ -47,5 +47,28 @@ async def create_dashboard(
     }
 
     await dashboards_collection.insert_one(dashboard_data)
-
     return dashboard_data
+
+
+# ---------------- Get all dashboards for logged-in user ----------------
+@router.get("/my-dashboards")
+async def get_my_dashboards(current_user: User = Depends(get_current_user)):
+    """Returns dashboards owned by and shared with the current user."""
+    
+    owned_dashboards = await dashboards_collection.find(
+        {"owner_id": current_user.id}
+    ).to_list(length=None)
+
+    shared_dashboards = await dashboards_collection.find(
+        {"shared_with": {"$in": [current_user.id]}}
+    ).to_list(length=None)
+
+    # Convert ObjectId to str in MongoDB results
+    def serialize(doc):
+        doc["_id"] = str(doc["_id"])
+        return doc
+
+    return {
+        "owned": [serialize(d) for d in owned_dashboards],
+        "shared_access": [serialize(d) for d in shared_dashboards]
+    }

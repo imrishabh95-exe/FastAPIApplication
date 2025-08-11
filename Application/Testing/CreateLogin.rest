@@ -106,3 +106,17 @@ Authorization: Bearer {{Login.response.body.access_token}}
   "description": "Group for shared expenses tracking",
   "color": "#FF5733"
 }
+
+
+###
+# @name Dashboards
+# Uses the captured token to access a protected endpoint.
+GET {{host}}/dashboard/my-dashboards
+Authorization: Bearer {{Login.response.body.access_token}}
+
+
+###
+# @name TGs
+# Uses the captured token to access a protected endpoint.
+GET {{host}}/transactional-group/my-transactional-groups
+Authorization: Bearer {{Login.response.body.access_token}}
